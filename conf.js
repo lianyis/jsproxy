@@ -41,12 +41,21 @@ jsproxy_config({
    * 2. 关键修改：清空 CDN 路径
    * 这样 SW 才会去当前域名下寻找 index_v4.html
    */
-  assets_cdn: '',
+  jsproxy_config({
+    ver: '120', // 记得升级版本号
+  // ... 其他配置保持不变 ...
 
   /**
-   * 3. 关键修改：指定新首页
+   * 关键修改：
+   * 既然 bundle.js 在 assets 目录下，这里必须写上 'assets/'
+   * 注意末尾要有斜杠
    */
-  index_path: 'index_v4.html',
+    assets_cdn: 'assets/',
+
+    index_path: 'index_v4.html',
+  // ...
+})
+
 
   direct_host_list: 'cors_v1.txt',
   inject_html: '<!-- custom html -->',
