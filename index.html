@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+  <title>Wowhead Proxy</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
+  <base target="_blank">
+  <style>
+    body {
+      background: #121212;
+      color: #e0e0e0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    #btnGo {
+      display: inline-block;
+      padding: 15px 40px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #fff;
+      background: #b92b27;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.3s, transform 0.2s;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    #btnGo:hover {
+      background: #d32f2f;
+      transform: translateY(-2px);
+    }
+    #btnGo:active {
+      transform: translateY(1px);
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #888;
+    }
+    /* 隐藏掉原来的选择器，但保留DOM结构以防JS报错 */
+    #selNode { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- 唯一的入口按钮 -->
+  <a id="btnGo" href="./-----https://www.wowhead.com/">进入 Wowhead</a>
+  
+  <div id="status">正在初始化代理...</div>
+
+  <!-- 隐藏的节点选择器，保留它是为了兼容原来的 sw 通信逻辑 -->
+  <select id="selNode"></select>
+
+  <script>
+    // 这里的逻辑尽量保持原版，确保能正确和 SW 握手
+    const PAGE_CONF_SET = 110
+    const PAGE_CONF_GET = 111
+    const SW_CONF_RETURN = 112
+    const SW_CONF_CHANGE = 113
+    const PAGE_READY_CHECK = 200
+    const SW_READY = 201
+
+    const sw = navigator.serviceWorker
+
+    // 监听 SW 消息
+    sw.addEventListener('message', onSwMsg)
+    sendMsgToSw(PAGE_READY_CHECK)
+
+    // SW 消息处理
+    function onSwMsg(e) {
+      const [cmd, msg] = e.data
+      switch (cmd) {
+        case SW_CONF_RETURN:
+          conf = msg
+          // 不再调用 showConf()，因为我们不需要显示节点列表
+          break
+        case SW_CONF_CHANGE:
+          conf = msg
+          break
+        case SW_READY:
+          console.log('sw ready')
+          // 当 SW 准备好时，更新状态提示
+          document.getElementById('status').innerText = '代理就绪，请点击上方按钮'
+          sendMsgToSw(PAGE_CONF_GET)
+          break
+      }
+    }
+
+    function sendMsgToSw(cmd, val) {
+      const ctl = sw.controller
+      if (!ctl) {
+        console.log('ctl is null')
+        return
+      }
+      ctl.postMessage([cmd, val])
+    }
+  </script>
+</body>
+</html>
