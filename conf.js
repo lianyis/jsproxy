@@ -7,7 +7,7 @@ jsproxy_config({
 
   // 你的首页文件名，确保这个文件在根目录或者 assets 目录能访问到
   // 建议把 index_v4.html 复制一份到根目录叫 index.html
-  index_path: 'index.html', 
+  index_path: 'index_v4.html', 
   
   node_map: {
     'mysite': { label: 'Local', lines: { [location.host]: 1 } }
