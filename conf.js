@@ -1,28 +1,18 @@
 jsproxy_config({
-  // 1. 版本号 +1，确保 SW 会更新配置
-  ver: '111', 
+  ver: '125', // 再次升级版本号
+  static_assets: [],
+  
+  // 【关键修改】使用基于域名的绝对路径
+  // 这样 sw.js 里的 importScripts 就会拼接成：
+  // /jsproxy/assets/bundle.c33e24c5.js
+  assets_cdn: '/jsproxy/assets/',
 
-  static_boost: {
-    enable: true,
-    ver: 62
-  },
-
+  index_path: 'index_v4.html',
+  
+  // 其他配置保持默认即可
   node_map: {
-    'demo-hk': {
-      label: '演示服务-香港节点',
-      lines: {
-        'node-aliyun-hk-1.etherdream.com:8443': 1,
-        'node-aliyun-hk-2.etherdream.com:8443': 2,
-      }
-    },
-    'demo-sg': {
-      label: '演示服务-新加坡节点',
-      lines: {
-        'node-aliyun-sg.etherdream.com:8443': 1,
-      },
-    },
     'mysite': {
-      label: '当前站点',
+      label: 'Local',
       lines: {
         [location.host]: 1,
       }
@@ -33,27 +23,8 @@ jsproxy_config({
       lines: {}
     }
   },
-
   node_default: 'mysite',
   node_acc: 'cfworker',
-
-  /**
-   * 2. 关键修改：清空 CDN 路径
-   * 这样 SW 才会去当前域名下寻找 index_v4.html
-   */
-  jsproxy_config({
-    ver: '120', // 记得升级版本号
-  // ... 其他配置保持不变 ...
-
-  /**
-   * 关键修改：
-   * 既然 bundle.js 在 assets 目录下，这里必须写上 'assets/'
-   * 注意末尾要有斜杠
-   */
-    assets_cdn: 'assets/',
-
-    index_path: 'index_v4.html',
-  // ...
 })
 
 
