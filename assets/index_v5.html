@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <title>通用网页代理</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+      body, html {
+          height: 100%;
+          margin: 0;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      }
+      .background {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+      }
+      .card {
+          border-radius: 12px;
+          background-color: rgba(255, 255, 255, 0.95);
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      }
+      .card-title {
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 20px !important;
+      }
+      .input-field input[type=text]:focus {
+          border-bottom: 1px solid #764ba2 !important;
+          box-shadow: 0 1px 0 0 #764ba2 !important;
+      }
+      .input-field input[type=text]:focus + label {
+          color: #764ba2 !important;
+      }
+      .btn {
+          width: 100%;
+          background-color: #764ba2;
+          border-radius: 25px;
+          height: 45px;
+          line-height: 45px;
+          font-weight: bold;
+          text-transform: none;
+          margin-top: 15px;
+      }
+      .btn:hover {
+          background-color: #667eea;
+      }
+      /* 暗色模式适配 */
+      @media (prefers-color-scheme: dark) {
+          .background { background: #121212; }
+          .card { background-color: #1e1e1e; color: #fff; }
+          .card-title { color: #fff; }
+          .input-field input[type=text] { color: #fff; }
+          .input-field label { color: #aaa; }
+          .input-field input[type=text]:focus {
+               border-bottom: 1px solid #bb86fc !important;
+               box-shadow: 0 1px 0 0 #bb86fc !important;
+          }
+          .input-field input[type=text]:focus + label { color: #bb86fc !important; }
+          .btn { background-color: #bb86fc; color: #000; }
+          .btn:hover { background-color: #3700b3; color: #fff; }
+      }
+      /* 隐藏原有 jsproxy 的节点选择器，但保留结构防报错 */
+      #selNode { display: none; }
+  </style>
+</head>
+<body>
+  <div class="background">
+      <div class="container">
+          <div class="row">
+              <div class="col s12 m8 offset-m2 l6 offset-l3">
+                  <div class="card">
+                      <div class="card-content">
+                          <span class="card-title center-align">Proxy Everything</span>
+                          <form id="urlForm" onsubmit="redirectToProxy(event)">
+                              <div class="input-field">
+                                  <input type="text" id="targetUrl" placeholder="例如: google.com" required autocomplete="off">
+                                  <label for="targetUrl">输入目标网址</label>
+                              </div>
+                              <button type="submit" class="btn waves-effect waves-light">立即跳转</button>
+                          </form>
+                          <!-- 状态提示区域 -->
+                          <div id="status" class="center-align" style="margin-top:15px; color:#888; font-size:12px;">正在初始化代理服务...</div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  
+  <script>
+    // === 核心部分：适配 jsproxy 的 Service Worker 逻辑 ===
+    // 这部分必须保留，否则打开网页后代理服务不会启动
+
+    const SW_READY = 201
+    const PAGE_READY_CHECK = 200
+    const sw = navigator.serviceWorker
+
+    // 1. 注册 SW 通信
+    if (sw) {
+        sw.addEventListener('message', onSwMsg)
+        sendMsgToSw(PAGE_READY_CHECK)
+    } else {
+        document.getElementById('status').innerText = '当前浏览器不支持 Service Worker，无法使用代理';
+    }
+
+    function onSwMsg(e) {
+      const [cmd, msg] = e.data
+      if (cmd === SW_READY) {
+        document.getElementById('status').innerText = '代理服务已就绪';
+        document.getElementById('status').style.color = '#4caf50'; // 绿色
+      }
+    }
+
+    function sendMsgToSw(cmd, val) {
+      if (!sw.controller) return;
+      sw.controller.postMessage([cmd, val])
+    }
+
+    // === 跳转逻辑：适配 jsproxy 格式 ===
+    function redirectToProxy(event) {
+        event.preventDefault();
+        let inputUrl = document.getElementById('targetUrl').value.trim();
+
+        if (!inputUrl) return;
+
+        // 自动补全协议
+        if (!/^https?:\/\//i.test(inputUrl)) {
+            inputUrl = 'https://' + inputUrl;
+        }
+
+        // jsproxy 的标准跳转格式: ./-----https://www.google.com
+        const proxyUrl = './-----' + inputUrl;
+        
+        // 在新窗口打开
+        window.open(proxyUrl, '_blank', 'noopener,noreferrer');
+    }
+  </script>
+  
+  <!-- 保留这个隐藏元素，防止 jsproxy 某些旧逻辑报错 -->
+  <select id="selNode"></select>
+</body>
+</html>
